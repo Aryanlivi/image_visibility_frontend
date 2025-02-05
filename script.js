@@ -1,4 +1,4 @@
-const apiUrl = 'http://127.0.0.1:8000/yt_ftp/urls/';
+const apiUrl = 'http://127.0.0.1:8000/yt_ftp/api/urls/';
 const urlList = document.getElementById('url-list');
 const addUrlForm = document.getElementById('add-url-form');
 const editForm = document.getElementById('edit-url-form');
@@ -27,7 +27,6 @@ async function fetchUrls() {
                 <div>
                     <h5>${url.name}</h5>
                     <p class="mb-1">${url.url}</p>
-                    <small>Last Updated: ${new Date(url.last_updated).toLocaleString()}</small>
                 </div>
                 <span class="badge ${url.active ? 'bg-success' : 'bg-danger'}">
                     ${url.active ? 'Active' : 'Inactive'}
@@ -261,6 +260,69 @@ async function addUrl(event) {
         alert('Error adding URL: ' + error.message);
     }
 }
+
+
+document.getElementById("search").addEventListener("input", function () {
+    // console.log("Search input detected:", this.value); // Debugging log
+    searchURLs();
+});
+
+
+function searchURLs() {
+    let query = document.getElementById('search').value.trim();
+
+    if (query === "") {
+        fetchUrls(); // Reload full list when search is empty
+        return;
+    }
+
+    fetch(`${apiUrl}?name__icontains=${encodeURIComponent(query)}`)
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        urlList.innerHTML = ""; // Clear existing results
+
+        if (data.length === 0) {
+            let noResult = document.createElement("li");
+            noResult.textContent = "No results found";
+            noResult.classList.add("list-group-item", "text-muted");
+            urlList.appendChild(noResult);
+            return;
+        }
+
+        data.forEach(url => {
+            const card = document.createElement('li');
+            card.className = 'list-group-item d-flex justify-content-between align-items-center';
+            card.style.cursor = 'pointer';
+
+            card.innerHTML = `
+                <div>
+                    <h5>${url.name}</h5>
+                    <p class="mb-1">${url.url}</p>
+                </div>
+                <span class="badge ${url.active ? 'bg-success' : 'bg-danger'}">
+                    ${url.active ? 'Active' : 'Inactive'}
+                </span> 
+            `;
+
+            // Add click event for editing
+            card.addEventListener('click', () => {
+                populateEditForm(url);
+                modal.show();
+            });
+
+            urlList.appendChild(card);
+        });
+    })
+    .catch(error => {
+        console.error("Error fetching search data:", error);
+    });
+}
+
 // Initialize the app
 addUrlForm.addEventListener('submit', addUrl);
 fetchUrls(); 
