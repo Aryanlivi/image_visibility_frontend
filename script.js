@@ -1,9 +1,52 @@
-const apiUrl = window.location.origin + '/yt_ftp/api/urls/';
+// const apiUrl = window.location.origin + '/yt_ftp/api/urls/';
+const baseApi='http://localhost:8000/yt_ftp/api/';
+const apiUrl =baseApi+'urls/';
+const apiFtpUrl = baseApi+'ftp_configs/';
 const urlList = document.getElementById('url-list');
+const ftpList = document.getElementById('ftp-list');
 const addUrlForm = document.getElementById('add-url-form');
 const editForm = document.getElementById('edit-url-form');
 const modal = new bootstrap.Modal(document.getElementById('editModal'));
+// Function to fetch FTP servers from the backend
+async function fetchFtpServers() {
+    console.log("Fetching FTP servers...");  // Ensure function is being called
 
+    try {
+        const response = await fetch(apiFtpUrl);
+        console.log("Response received:", response);
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const ftpServers = await response.json();
+        console.log("FTP Servers Data:", ftpServers);  // Log the full response
+
+        ftpList.innerHTML = '';  // Clear the list before adding new items
+
+        ftpServers.forEach((ftpServer) => {
+            console.log("Processing:", ftpServer);  // Check each object
+
+            const card = document.createElement('li');
+            card.className = 'list-group-item d-flex justify-content-between align-items-center';
+            card.style.cursor = 'pointer';
+
+            card.innerHTML = `
+                <div>
+                    <h5>${ftpServer.ftp_server || 'No Server Name'}</h5>
+                    <p class="mb-1">${ftpServer.remote_directory || 'No Directory'}</p>
+                </div>
+            `;
+
+            ftpList.appendChild(card);
+        });
+    } catch (error) {
+        console.error('Error fetching FTP servers:', error);
+    }
+}
+
+// Initialize the app
+fetchFtpServers();
 // Function to fetch URLs from the backend
 async function fetchUrls() {
     try {
@@ -174,8 +217,7 @@ document.getElementById('delete-url-btn').addEventListener('click', () => {
     const id = modal.getAttribute('data-id'); // Get the ID from the modal's data attribute
     deleteUrl(id);
 });
-// Call the function to fetch URLs on page load
-fetchUrls();
+
 
 // Function to add a new URL
 async function addUrl(event) {
@@ -323,6 +365,14 @@ function searchURLs() {
     });
 }
 
-// Initialize the app
 addUrlForm.addEventListener('submit', addUrl);
+
+
+
 fetchUrls(); 
+
+
+document.addEventListener("DOMContentLoaded", () => {
+    fetchUrls();
+    fetchFtpServers();
+});

@@ -1,0 +1,42 @@
+
+// Function to fetch FTP servers from the backend
+// async function fetchFtpServers() {
+//     console.log("Fetching FTP servers...");  // Ensure function is being called
+
+//     try {
+//         const response = await fetch(apiFtpUrl);
+//         console.log("Response received:", response);
+
+//         if (!response.ok) {
+//             throw new Error(`HTTP error! status: ${response.status}`);
+//         }
+
+//         const ftpServers = await response.json();
+//         console.log("FTP Servers Data:", ftpServers);  // Log the full response
+
+//         ftpList.innerHTML = '';  // Clear the list before adding new items
+
+//         ftpServers.forEach((ftpServer) => {
+//             console.log("Processing:", ftpServer);  // Check each object
+
+//             const card = document.createElement('li');
+//             card.className = 'list-group-item d-flex justify-content-between align-items-center';
+//             card.style.cursor = 'pointer';
+
+//             card.innerHTML = `
+//                 <div>
+//                     <h5>${ftpServer.ftp_server || 'No Server Name'}</h5>
+//                     <p class="mb-1">${ftpServer.remote_directory || 'No Directory'}</p>
+//                 </div>
+//             `;
+
+//             ftpList.appendChild(card);
+//         });
+//     } catch (error) {
+//         console.error('Error fetching FTP servers:', error);
+//     }
+// }
+
+// Initialize the app
+// fetchFtpServers();
+
