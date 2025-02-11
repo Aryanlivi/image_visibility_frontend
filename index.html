@@ -48,6 +48,36 @@
         .search-bar {
             margin-bottom: 20px;
         }
+
+        .ftp-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .ftp-item {
+            list-style: none;
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+        }
+        .ftp-item:last-child {
+            border-bottom: none;
+        }
+        .ftp-label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            width: 100%;
+        }
+        .ftp-label input {
+            margin-right: 10px;
+            transform: scale(1.2);
+        }
+        .ftp-label:hover {
+            background: #f8f9fa;
+        }
+        .dropdown-menu {
+            max-height: 250px;
+            overflow-y: auto;
+        }
     </style>
 </head>
 <body>
@@ -133,6 +163,26 @@
                                     <option value="true">True</option>
                                     <option value="false">False</option>
                                 </select>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="ftp_server" class="form-label">FTP Server</label>
+                            <div class="dropdown">
+                                <button class="btn btn-outline-dark dropdown-toggle w-100" type="button" id="ftpDropdown" data-bs-toggle="dropdown"  aria-expanded="false">
+                                    Select FTP Servers
+                                </button>
+                                <ul class="dropdown-menu w-100 p-2 border-2 shadow-sm" aria-labelledby="ftpDropdown" style="max-height: 250px; overflow-y: auto;">
+                                    <input type="text" class="form-control form-control-sm mb-2" id="searchFtp" placeholder="Search FTP Servers">
+                                    <div id="ftp-list-dropdown" class="ftp-list-dropdown">
+                                        <!-- Dynamically populate FTP server options -->
+                                    </div>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label">Selected FTP Servers</label>
+                            <div id="selected-ftp" class="border p-2 rounded bg-light text-dark small" style="min-height: 40px;"></div>
                         </div>
                     </div>
                     <br>

@@ -1,32 +1,99 @@
-// const apiUrl = window.location.origin + '/yt_ftp/api/urls/';
+
 const baseApi='http://localhost:8000/yt_ftp/api/';
 const apiUrl =baseApi+'urls/';
 const apiFtpUrl = baseApi+'ftp_configs/';
 const urlList = document.getElementById('url-list');
 const ftpList = document.getElementById('ftp-list');
+const ftpListDropdown = document.getElementById('ftp-list-dropdown');
+const selectedFtpDiv = document.getElementById('selected-ftp');
 const addUrlForm = document.getElementById('add-url-form');
 const editForm = document.getElementById('edit-url-form');
 const modal = new bootstrap.Modal(document.getElementById('editModal'));
-// Function to fetch FTP servers from the backend
-async function fetchFtpServers() {
-    console.log("Fetching FTP servers...");  // Ensure function is being called
+const selectedFtpServers = new Set(); // Store selected FTP servers
+// Function to update the selected FTP display
+function updateSelectedFtp() {
+    if (selectedFtpServers.size > 0) {
+        let badges = [];
+        selectedFtpServers.forEach(server => {
+            badges.push(`<span class="badge bg-primary me-1">${server.name}</span>`);
+        });
+        selectedFtpDiv.innerHTML = badges.join(' ');
+    } else {
+        selectedFtpDiv.innerHTML = '<span class="text-muted">No FTP server selected</span>';
+    }
+} 
 
+
+// Function to handle checkbox clicks
+function handleCheckboxChange(event) {
+    const checkbox = event.target;
+    const ftpId = checkbox.id; // Get ID from data attribute
+    const ftpName = checkbox.value; // Get Name from value
+    if (checkbox.checked) {
+        selectedFtpServers.add({ id: ftpId, name: ftpName }); // Store both ID and name
+    } else {
+        selectedFtpServers.forEach(server => {
+            if (server.id === ftpId) {
+                selectedFtpServers.delete(server);
+            }
+        });
+    }
+    updateSelectedFtp();
+}
+
+
+// Function to fetch and populate FTP dropdown
+async function fetchFtpServersDropdown() {
     try {
         const response = await fetch(apiFtpUrl);
-        console.log("Response received:", response);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+        const ftpServers = await response.json();
+        ftpListDropdown.innerHTML = '';  // Clear the list before adding new items
+
+        ftpServers.forEach((ftpServer) => {
+            const listItem = document.createElement('li');
+            listItem.className = 'ftp-item';
+
+            const isChecked = selectedFtpServers.has(ftpServer.ftp_server) ? 'checked' : ''; // Preserve selection
+
+            listItem.innerHTML = `
+                <label class="ftp-label">
+                    <input type="checkbox" class="ftp-option" value="${ftpServer.ftp_server}" id="${ftpServer.id}" ${isChecked}>
+                    ${ftpServer.ftp_server || 'Unnamed Server'}
+                </label>
+            `;
+
+            ftpListDropdown.appendChild(listItem);
+        });
+
+        // Add event listener to newly created checkboxes
+        document.querySelectorAll('.ftp-option').forEach(checkbox => {
+            checkbox.addEventListener('change', handleCheckboxChange);
+        });
+
+    } catch (error) {
+        console.error('Error fetching FTP servers:', error);
+    }
+}
+
+// Re-fetch FTP list when opening the dropdown
+document.getElementById('ftpDropdown').addEventListener('click', fetchFtpServersDropdown);
+
+
+// Function to fetch FTP servers from the backend
+async function fetchFtpServers() {
+    try {
+        const response = await fetch(apiFtpUrl);
 
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
 
         const ftpServers = await response.json();
-        console.log("FTP Servers Data:", ftpServers);  // Log the full response
-
         ftpList.innerHTML = '';  // Clear the list before adding new items
 
         ftpServers.forEach((ftpServer) => {
-            console.log("Processing:", ftpServer);  // Check each object
-
             const card = document.createElement('li');
             card.className = 'list-group-item d-flex justify-content-between align-items-center';
             card.style.cursor = 'pointer';
@@ -43,10 +110,8 @@ async function fetchFtpServers() {
     } catch (error) {
         console.error('Error fetching FTP servers:', error);
     }
-}
+} 
 
-// Initialize the app
-fetchFtpServers();
 // Function to fetch URLs from the backend
 async function fetchUrls() {
     try {
@@ -259,6 +324,12 @@ async function addUrl(event) {
         alert('Please fill out all fields correctly.');
         return;
     }
+    const selectedFtpArray = Array.from(selectedFtpServers); // Convert set to array
+    if (selectedFtpArray.length === 0) {
+        alert('Please select at least one FTP server.');
+        return;
+    }
+    
     try {
         const response = await fetch(apiUrl, {
             method: 'POST',
@@ -279,7 +350,8 @@ async function addUrl(event) {
                     altitude: altitude,
                     imageowner: imageOwner,
                     angle: angle                                 
-                }
+                },
+                ftp_configs: selectedFtpArray // Include selected FTP servers
             }),
         });
 
@@ -296,7 +368,10 @@ async function addUrl(event) {
         altitudeInput.value = '';
         imageOwnerInput.value = '';
         angleInput.value = '';
+        selectedFtpServers.clear(); // Clear selected FTPs after submission
+        updateSelectedFtp(); // Refresh selected FTP UI
         fetchUrls(); // Refresh the list
+        fetchFtpServers(); // Refresh the FTP list
     } catch (error) {
         console.error(error);
         alert('Error adding URL: ' + error.message);
@@ -368,8 +443,6 @@ function searchURLs() {
 addUrlForm.addEventListener('submit', addUrl);
 
 
-
-fetchUrls(); 
 
 
 document.addEventListener("DOMContentLoaded", () => {
