@@ -13,53 +13,52 @@ const selectedFtpServers = new Set(); // Store selected FTP servers
 // Function to update the selected FTP display
 function updateSelectedFtp() {
     if (selectedFtpServers.size > 0) {
-        let badges = [];
-        selectedFtpServers.forEach(server => {
-            badges.push(`<span class="badge bg-primary me-1">${server.name}</span>`);
+        let badges = Array.from(selectedFtpServers).map(ftpId => {
+            // Get the name based on selected FTP ID
+            const server = ftpListDropdown.querySelector(`[data-id="${ftpId}"]`);
+            const ftpName = server ? server.value : 'Unknown';
+            return `<span class="badge bg-primary me-1">${ftpName}</span>`;
         });
+
         selectedFtpDiv.innerHTML = badges.join(' ');
     } else {
         selectedFtpDiv.innerHTML = '<span class="text-muted">No FTP server selected</span>';
     }
-} 
-
+}
 
 // Function to handle checkbox clicks
 function handleCheckboxChange(event) {
     const checkbox = event.target;
-    const ftpId = checkbox.id; // Get ID from data attribute
-    const ftpName = checkbox.value; // Get Name from value
+    const ftpId = checkbox.getAttribute("data-id"); // Use data-id for ID
+    
+    // Add the ID if checked, and remove it if unchecked
     if (checkbox.checked) {
-        selectedFtpServers.add({ id: ftpId, name: ftpName }); // Store both ID and name
+        selectedFtpServers.add(ftpId); // Only store the ID to avoid duplicates
     } else {
-        selectedFtpServers.forEach(server => {
-            if (server.id === ftpId) {
-                selectedFtpServers.delete(server);
-            }
-        });
+        selectedFtpServers.delete(ftpId);
     }
+
     updateSelectedFtp();
 }
 
-
-// Function to fetch and populate FTP dropdown
+// Function to fetch FTP servers and populate the dropdown with checkboxes
 async function fetchFtpServersDropdown() {
     try {
         const response = await fetch(apiFtpUrl);
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
 
         const ftpServers = await response.json();
-        ftpListDropdown.innerHTML = '';  // Clear the list before adding new items
+        ftpListDropdown.innerHTML = ''; // Clear existing list before adding new items
 
         ftpServers.forEach((ftpServer) => {
             const listItem = document.createElement('li');
             listItem.className = 'ftp-item';
 
-            const isChecked = selectedFtpServers.has(ftpServer.ftp_server) ? 'checked' : ''; // Preserve selection
-
+            // Check if the server is already selected
+            const isChecked = selectedFtpServers.has(String(ftpServer.id)) ? 'checked' : '';
             listItem.innerHTML = `
                 <label class="ftp-label">
-                    <input type="checkbox" class="ftp-option" value="${ftpServer.ftp_server}" id="${ftpServer.id}" ${isChecked}>
+                    <input type="checkbox" class="ftp-option" value="${ftpServer.ftp_server}" data-id="${ftpServer.id}" ${isChecked}>
                     ${ftpServer.ftp_server || 'Unnamed Server'}
                 </label>
             `;
@@ -67,16 +66,14 @@ async function fetchFtpServersDropdown() {
             ftpListDropdown.appendChild(listItem);
         });
 
-        // Add event listener to newly created checkboxes
+        // Attach event listener for each checkbox
         document.querySelectorAll('.ftp-option').forEach(checkbox => {
             checkbox.addEventListener('change', handleCheckboxChange);
         });
-
     } catch (error) {
         console.error('Error fetching FTP servers:', error);
     }
 }
-
 // Re-fetch FTP list when opening the dropdown
 document.getElementById('ftpDropdown').addEventListener('click', fetchFtpServersDropdown);
 
