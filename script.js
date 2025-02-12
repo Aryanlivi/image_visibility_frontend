@@ -13,11 +13,10 @@ const selectedFtpServers = new Set(); // Store selected FTP servers
 // Function to update the selected FTP display
 function updateSelectedFtp() {
     if (selectedFtpServers.size > 0) {
-        let badges = Array.from(selectedFtpServers).map(ftpId => {
-            // Get the name based on selected FTP ID
-            const server = ftpListDropdown.querySelector(`[data-id="${ftpId}"]`);
-            const ftpName = server ? server.value : 'Unknown';
-            return `<span class="badge bg-primary me-1">${ftpName}</span>`;
+        let badges = Array.from(selectedFtpServers).map(ftpConfig => {
+            const parsedFtpConfig = JSON.parse(ftpConfig);
+
+            return `<span class="badge bg-primary me-1">${parsedFtpConfig.ftp_server}-${parsedFtpConfig.remote_directory}</span>`;
         });
 
         selectedFtpDiv.innerHTML = badges.join(' ');
@@ -29,20 +28,28 @@ function updateSelectedFtp() {
 // Function to handle checkbox clicks
 function handleCheckboxChange(event) {
     const checkbox = event.target;
-    const ftpId = checkbox.getAttribute("data-id"); // Use data-id for ID
+    const id = checkbox.getAttribute("data-id"); // Use data-id for ID
     
-    // Add the ID if checked, and remove it if unchecked
+    // Get the ftp_server and remote_directory values for the selected FTP
+    const server = ftpListDropdown.querySelector(`[data-id="${id}"]`);
+    const ftp_server = server ? server.value : 'Unknown';
+    const remote_directory = server ? server.getAttribute('data-remote-directory') : 'Unknown';
+
+    // Create an object with ftp_server and remote_directory
+    const ftpConfig = {id, ftp_server, remote_directory };
+
+    // Add the object to the set if checked, remove it if unchecked
     if (checkbox.checked) {
-        selectedFtpServers.add(ftpId); // Only store the ID to avoid duplicates
+        selectedFtpServers.add(JSON.stringify(ftpConfig)); // Store as a stringified object
     } else {
-        selectedFtpServers.delete(ftpId);
+        selectedFtpServers.delete(JSON.stringify(ftpConfig));
     }
 
     updateSelectedFtp();
 }
 
 // Function to fetch FTP servers and populate the dropdown with checkboxes
-async function fetchFtpServersDropdown() {
+async function fetchFtpServersDropdown() {  
     try {
         const response = await fetch(apiFtpUrl);
         if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
@@ -55,11 +62,17 @@ async function fetchFtpServersDropdown() {
             listItem.className = 'ftp-item';
 
             // Check if the server is already selected
-            const isChecked = selectedFtpServers.has(String(ftpServer.id)) ? 'checked' : '';
+            const isChecked = Array.from(selectedFtpServers).some(config => {
+                const { ftp_server, remote_directory } = JSON.parse(config);
+                return ftp_server === ftpServer.ftp_server && remote_directory === ftpServer.remote_directory;
+            }) ? 'checked' : '';
+
             listItem.innerHTML = `
                 <label class="ftp-label">
-                    <input type="checkbox" class="ftp-option" value="${ftpServer.ftp_server}" data-id="${ftpServer.id}" ${isChecked}>
-                    ${ftpServer.ftp_server || 'Unnamed Server'}
+                    <input type="checkbox" class="ftp-option" value="${ftpServer.ftp_server}" 
+                        data-id="${ftpServer.id}" data-remote-directory="${ftpServer.remote_directory}" 
+                        ${isChecked}>
+                    ${ftpServer.ftp_server || 'Unnamed Server'} - ${ftpServer.remote_directory || 'Unknown Directory'}
                 </label>
             `;
 
@@ -74,6 +87,7 @@ async function fetchFtpServersDropdown() {
         console.error('Error fetching FTP servers:', error);
     }
 }
+
 // Re-fetch FTP list when opening the dropdown
 document.getElementById('ftpDropdown').addEventListener('click', fetchFtpServersDropdown);
 
@@ -285,7 +299,7 @@ document.getElementById('delete-url-btn').addEventListener('click', () => {
 async function addUrl(event) {
     event.preventDefault(); // Prevent form submission
     const urlInput = document.getElementById('url-input');
-    const nameInput = document.getElementById('name');
+    const nameInput = document.getElementById('name'); 
     const captureIntervalInput = document.getElementById('capture_interval');
     const activeInput=document.getElementById('active');
     const deviceIdInput = document.getElementById('device_id');
@@ -321,12 +335,17 @@ async function addUrl(event) {
         alert('Please fill out all fields correctly.');
         return;
     }
-    const selectedFtpArray = Array.from(selectedFtpServers); // Convert set to array
+    console.log(selectedFtpServers)
+   // Convert selectedFtpServers to an array of objects
+    const selectedFtpArray = Array.from(selectedFtpServers).map(ftpString => {
+        // Parse the string into an object
+        return JSON.parse(ftpString);
+    }); 
     if (selectedFtpArray.length === 0) {
         alert('Please select at least one FTP server.');
         return;
     }
-    
+    console.log(selectedFtpArray)
     try {
         const response = await fetch(apiUrl, {
             method: 'POST',
@@ -376,14 +395,14 @@ async function addUrl(event) {
 }
 
 
-document.getElementById("search").addEventListener("input", function () {
+document.getElementById("search_urls").addEventListener("input", function () {
     // console.log("Search input detected:", this.value); // Debugging log
     searchURLs();
 });
 
 
 function searchURLs() {
-    let query = document.getElementById('search').value.trim();
+    let query = document.getElementById('search_urls').value.trim();
 
     if (query === "") {
         fetchUrls(); // Reload full list when search is empty
