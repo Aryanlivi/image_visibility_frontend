@@ -103,7 +103,7 @@
                                     Select FTP Servers
                                 </button>
                                 <ul class="dropdown-menu w-100 p-2 border-2 shadow-sm" aria-labelledby="ftpDropdown" style="max-height: 250px; overflow-y: auto;">
-                                    <input type="text" class="form-control form-control-sm mb-2" id="searchFtp" placeholder="Search FTP Servers">
+                                    <input type="text" class="form-control form-control-sm mb-2" id="ftp-dropdown-search" placeholder="Search FTP Servers">
                                     <div id="ftp-list-dropdown" class="ftp-list-dropdown">
                                         <!-- Dynamically populate FTP server options -->
                                     </div>
@@ -135,7 +135,36 @@
             <!-- FTP Servers Section -->
             <div class="tab-pane fade" id="ftps">
                 <h5>FTP Servers</h5>
-                <input type="text" id="search_ftps" class="form-control search-bar" placeholder="Search by name...">
+                <!-- Add FTP Server Form -->
+                <div class="mt-4 p-3 border rounded bg-light">
+                    <h5>Add New FTP Server</h5>
+                    <form id="add-ftp-form">
+                        <div class="row mb-2">
+                            <div class="col-md-6">
+                                <label for="ftp-server" class="form-label">FTP server</label>
+                                <input type="text" id="ftp-server" name="ftp-server" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="ftp-remote-dir" class="form-label">Remote Dir</label>
+                                <input type="text" id="ftp-remote-dir" name="ftp-remote-dir" class="form-control" required>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-md-6">
+                                <label for="ftp-username" class="form-label">Username</label>
+                                <input type="text" id="ftp-username" name="ftp_username" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="ftp-password" class="form-label">Password</label>
+                                <input type="password" id="ftp-password" name="ftp_password" class="form-control" required>
+                            </div>
+                        </div>
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-submit w-25">Add FTP Server</button>
+                        </div>
+                    </form>
+                </div>
+                <br>
+                <input type="text" id="ftp-search" class="form-control search-bar" placeholder="Search by name...">
                 <ul id="ftp-list" class="list-group"> 
                     <!-- FTP Servers will be dynamically populated -->
                 </ul>
